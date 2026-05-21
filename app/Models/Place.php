@@ -10,12 +10,14 @@ class Place extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'address',
-        'latitude',
-        'longitude',
-        'description',
-        'category',
-        'image',
+    'name',
+    'address',
+    'latitude',
+    'longitude',
+    'category',
+    'subcategory',
+    'cluster',
+    'visit_duration',
+    'image'
     ];
 }

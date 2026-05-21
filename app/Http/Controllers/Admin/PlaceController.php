@@ -37,6 +37,8 @@ class PlaceController extends Controller
             'longitude' => 'required|numeric',
             'main_category' => 'required|string',
             'sub_category' => 'required|string',
+            'cluster' => 'nullable|string|max:255',
+            'visit_duration' => 'nullable|integer',
             'description' => 'nullable|string',
             'image' => 'nullable|image|max:2048'
         ]);
@@ -56,7 +58,9 @@ class PlaceController extends Controller
             'longitude' => $request->longitude,
             'description' => $request->description,
             'category' => $request->main_category,
-            'sub_category' => $request->sub_category,
+            'subcategory' => $request->sub_category,
+            'cluster' => $request->cluster,
+            'visit_duration' => $request->visit_duration ?? 60,
             'image' => $imageName,
         ]);
 
@@ -83,11 +87,13 @@ class PlaceController extends Controller
             'longitude' => 'required|numeric',
             'main_category' => 'required|string',
             'sub_category' => 'required|string',
+            'cluster' => 'nullable|string|max:255',
+            'visit_duration' => 'nullable|integer',
             'description' => 'nullable|string',
             'image' => 'nullable|image|max:2048'
         ]);
 
-        $data = $request->only(['name','address','latitude','longitude','main_category','sub_category','description']);
+        $data = $request->only(['name','address','latitude','longitude','main_category','sub_category','cluster','visit_duration','description']);
 
         if($request->hasFile('image')){
             $file = $request->file('image');
@@ -103,7 +109,9 @@ class PlaceController extends Controller
             'longitude' => $data['longitude'],
             'description' => $data['description'],
             'category' => $data['main_category'],
-            'sub_category' => $data['sub_category'],
+            'subcategory' => $data['sub_category'],
+            'cluster' => $data['cluster'],
+            'visit_duration' => $data['visit_duration'] ?? 60,
             'image' => $data['image'] ?? $place->image
         ]);
 

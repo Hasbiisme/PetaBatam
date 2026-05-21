@@ -4,7 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\Admin\PlaceController;
 use App\Http\Controllers\Admin\SmallDestinationController;
-use App\Http\Controllers\ProfileController; // <--- PENTING: Jangan lupa ini!
+use App\Http\Controllers\Admin\ClusterController;
+use App\Http\Controllers\Admin\ItineraryPreviewController;
+use App\Http\Controllers\TripController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,11 +19,12 @@ use App\Http\Controllers\ProfileController; // <--- PENTING: Jangan lupa ini!
 // 1. Halaman Depan (Publik)
 Route::get('/', [MapController::class, 'showMap']);
 
+
+Route::post('/generate-trip', [TripController::class, 'generateTrip']);
+Route::get('/trip/categories', [TripController::class, 'getCategories']);
+
 // 2. Dashboard (Login Required)
-Route::get('/dashboard', function () {
-    // (Opsional: Tambahkan logika statistik di sini jika mau)
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 // 3. Rute Profile (YANG HILANG TADI)
 Route::middleware('auth')->group(function () {
@@ -36,6 +41,13 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/places/{place}/edit', [PlaceController::class, 'edit'])->name('admin.places.edit');
     Route::put('/places/{place}', [PlaceController::class, 'update'])->name('admin.places.update');
     Route::delete('/places/{place}', [PlaceController::class, 'destroy'])->name('admin.places.destroy');
+
+    // Clusters
+    Route::get('/clusters', [ClusterController::class, 'index'])->name('admin.clusters.index');
+
+    // Itinerary Preview
+    Route::get('/itinerary-preview', [ItineraryPreviewController::class, 'index'])->name('admin.itinerary-preview.index');
+
     // ▼▼▼ TAMBAHKAN BLOK INI UNTUK SMALL DESTINATIONS ▼▼▼
     Route::get('/small-destinations', [SmallDestinationController::class, 'index'])->name('admin.small-destinations.index');
     Route::get('/small-destinations/create', [SmallDestinationController::class, 'create'])->name('admin.small-destinations.create');

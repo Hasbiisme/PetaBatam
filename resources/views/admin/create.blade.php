@@ -1,97 +1,135 @@
-@extends('layout.app')
-
-@section('content')
-<div class="max-w-2xl mx-auto bg-white p-6 shadow rounded-lg mt-10">
-    <h1 class="text-2xl font-bold mb-4">Tambah Tempat</h1>
-
-    @if($errors->any()) 
-        <div class="bg-red-100 text-red-700 p-2 rounded mb-4">
-            <ul>
-                @foreach($errors->all() as $error) 
-                    <li>{{ $error }}</li> 
-                @endforeach
-            </ul>
-        </div> 
-    @endif
-
-    <form action="{{ route('admin.places.store') }}" method="POST" enctype="multipart/form-data">
-        @csrf
-
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Nama</label>
-            <input type="text" name="name" class="w-full border rounded p-2" required>
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center gap-4">
+            <a href="{{ route('admin.places.index') }}" class="text-gray-400 hover:text-indigo-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </a>
+            {{ __('Add New Destination') }}
         </div>
+    </x-slot>
 
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Alamat</label>
-            <input type="text" name="address" class="w-full border rounded p-2" required>
-        </div>
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <form action="{{ route('admin.places.store') }}" method="POST" enctype="multipart/form-data" class="p-8">
+            @csrf
 
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Latitude</label>
-            <input type="text" name="latitude" class="w-full border rounded p-2" required>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Basic Info -->
+                <div class="space-y-6 md:col-span-2">
+                    <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">Basic Information</h3>
+                </div>
 
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Longitude</label>
-            <input type="text" name="longitude" class="w-full border rounded p-2" required>
-        </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Destination Name</label>
+                    <input type="text" name="name" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors" value="{{ old('name') }}" required>
+                    @error('name')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Deskripsi</label>
-            <textarea name="description" class="w-full border rounded p-2" rows="3"></textarea>
-        </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <input type="text" name="address" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors" value="{{ old('address') }}" required>
+                    @error('address')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Kategori Utama</label>
-            <select name="main_category" id="main_category" class="w-full border rounded p-2" required>
-                <option value="">Pilih Kategori</option>
-                <option value="accommodation">Accommodation</option>
-                <option value="food_beverages">Food Beverages</option>
-                <option value="public_information">Public Information</option>
-                <option value="attraction">Attraction</option>
-            </select>
-        </div>
+                <!-- Categorization -->
+                <div class="space-y-6 md:col-span-2 mt-4">
+                    <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">Categorization & Planning</h3>
+                </div>
 
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Sub Kategori</label>
-            <select name="sub_category" id="sub_category" class="w-full border rounded p-2" required>
-                <option value="">Pilih Sub Kategori</option>
-            </select>
-        </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select name="main_category" id="main_category" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors" required>
+                        <option value="">Select Category</option>
+                        @foreach($categories as $main => $subs)
+                            <option value="{{ $main }}" {{ old('main_category') == $main ? 'selected' : '' }}>{{ $main }}</option>
+                        @endforeach
+                    </select>
+                    @error('main_category')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Gambar</label>
-            <input type="file" name="image" class="w-full border rounded p-2">
-        </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+                    <select name="sub_category" id="sub_category" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors" required>
+                        <option value="">Select Category First</option>
+                    </select>
+                    @error('sub_category')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
 
-        <div class="mt-6">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Simpan</button>
-            <a href="{{ route('admin.places.index') }}" class="ml-2 text-gray-600">Batal</a>
-        </div>
-    </form>
-</div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cluster <span class="text-gray-400 font-normal">(e.g., Nagoya, Batam_Centre)</span></label>
+                    <input type="text" name="cluster" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors" value="{{ old('cluster') }}">
+                    @error('cluster')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
 
-<script>
-    const subCategories = {
-        accommodation: ['Apartment', 'Hotel', 'Villa', 'Resort'],
-        food_beverages: ['Restaurant', 'Coffee Shop', 'Cafetaria', 'Other FB Services'],
-        public_information: ['Hospital', 'Police Station', 'Bank'],
-        attraction: ['Mall', 'Nature Attraction', 'Heritage Site']
-    };
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Est. Visit Duration (minutes)</label>
+                    <input type="number" name="visit_duration" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors" value="{{ old('visit_duration', 60) }}" min="15">
+                    @error('visit_duration')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
 
-    const mainSelect = document.getElementById('main_category');
-    const subSelect = document.getElementById('sub_category');
+                <!-- Map Coordinates -->
+                <div class="space-y-6 md:col-span-2 mt-4">
+                    <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">Geographic Coordinates</h3>
+                </div>
 
-    mainSelect.addEventListener('change', function() {
-        subSelect.innerHTML = '<option value="">Pilih Sub Kategori</option>';
-        const items = subCategories[this.value] || [];
-        items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.toLowerCase().replace(/ /g, '_');
-            option.text = item;
-            subSelect.appendChild(option);
-        });
-    });
-</script>
-@endsection
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                    <input type="text" name="latitude" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors" value="{{ old('latitude') }}" required>
+                    @error('latitude')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                    <input type="text" name="longitude" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors" value="{{ old('longitude') }}" required>
+                    @error('longitude')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
+
+                <!-- Media & Description -->
+                <div class="space-y-6 md:col-span-2 mt-4">
+                    <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">Media & Description</h3>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" rows="4" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-colors">{{ old('description') }}</textarea>
+                    @error('description')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
+                    <input type="file" name="image" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-colors">
+                    @error('image')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
+                <a href="{{ route('admin.places.index') }}" class="px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">Cancel</a>
+                <button type="submit" class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors shadow-sm">Save Destination</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Script untuk dinamis dropdown subkategori -->
+    <script>
+        const categories = @json($categories);
+        const mainCatSelect = document.getElementById('main_category');
+        const subCatSelect = document.getElementById('sub_category');
+        const oldSub = "{{ old('sub_category') }}";
+
+        function updateSubcategories() {
+            const main = mainCatSelect.value;
+            subCatSelect.innerHTML = '<option value="">Select Subcategory</option>';
+            if(main && categories[main]) {
+                categories[main].forEach(sub => {
+                    let option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    if(oldSub === sub) option.selected = true;
+                    subCatSelect.appendChild(option);
+                });
+            }
+        }
+
+        mainCatSelect.addEventListener('change', updateSubcategories);
+        if(mainCatSelect.value) updateSubcategories();
+    </script>
+</x-app-layout>

@@ -237,6 +237,349 @@
                     display: none !important; /* Sembunyikan instruksi teks step-by-step di HP karena menuhin layar */
                 }
             }
+
+        /* =========================================
+           TRIP PLANNER PANEL
+           ========================================= */
+
+        /* Floating toggle button */
+        #trip-planner-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 1.5rem;
+            z-index: 3000;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            padding: 0.85rem 1.4rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(99,102,241,0.45);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #trip-planner-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(99,102,241,0.55);
+        }
+
+        /* Panel backdrop */
+        #trip-panel-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 3999;
+        }
+        #trip-panel-backdrop.open { display: block; }
+
+        /* Slide-in panel */
+        #trip-planner-panel {
+            position: fixed;
+            top: 0;
+            right: -26rem;
+            width: 24rem;
+            height: 100vh;
+            background: #ffffff;
+            z-index: 4000;
+            box-shadow: -6px 0 32px rgba(0,0,0,0.18);
+            display: flex;
+            flex-direction: column;
+            transition: right 0.35s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+        }
+        #trip-planner-panel.open { right: 0; }
+
+        /* Panel header */
+        .tp-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .tp-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.01em;
+        }
+        .tp-header p {
+            font-size: 0.75rem;
+            opacity: 0.85;
+            margin: 0.2rem 0 0;
+        }
+        #tp-close-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        #tp-close-btn:hover { background: rgba(255,255,255,0.3); }
+
+        /* Form section */
+        .tp-form {
+            padding: 1.25rem 1.5rem;
+            flex-shrink: 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .tp-field { margin-bottom: 1rem; }
+        .tp-field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .tp-field select,
+        .tp-field input[type="number"] {
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            border: 1.5px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #374151;
+            background: #f9fafb;
+            transition: border-color 0.2s;
+            appearance: none;
+        }
+        .tp-field select:focus,
+        .tp-field input[type="number"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+        }
+        .tp-checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .tp-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #4b5563;
+            cursor: pointer;
+        }
+        .tp-checkbox-label input[type="checkbox"] {
+            accent-color: #6366f1;
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+        }
+        #tp-generate-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border: none;
+            border-radius: 0.6rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: opacity 0.2s, transform 0.15s;
+            margin-top: 0.25rem;
+        }
+        #tp-generate-btn:hover:not(:disabled) {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+        #tp-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Spinner */
+        .tp-spinner {
+            width: 1.1rem; height: 1.1rem;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: tp-spin 0.7s linear infinite;
+            display: none;
+        }
+        @keyframes tp-spin { to { transform: rotate(360deg); } }
+
+        /* Results area */
+        #tp-results {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem 1.5rem;
+        }
+        #tp-results::-webkit-scrollbar { width: 5px; }
+        #tp-results::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+
+        /* Error / info messages */
+        .tp-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        .tp-message.info {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        /* Summary bar */
+        .tp-summary {
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+            border-radius: 0.6rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tp-summary-stat { text-align: center; }
+        .tp-summary-stat .stat-val {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #4f46e5;
+            line-height: 1;
+        }
+        .tp-summary-stat .stat-lbl {
+            font-size: 0.7rem;
+            color: #6366f1;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* Show on map button */
+        #tp-show-route-btn {
+            width: 100%;
+            padding: 0.65rem;
+            background: white;
+            color: #4f46e5;
+            border: 2px solid #6366f1;
+            border-radius: 0.6rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        #tp-show-route-btn:hover {
+            background: #6366f1;
+            color: white;
+        }
+
+        /* Timeline cards */
+        .tp-timeline { position: relative; }
+        .tp-timeline::before {
+            content: '';
+            position: absolute;
+            left: 1.1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #6366f1, #c7d2fe);
+            border-radius: 1px;
+        }
+        .tp-stop {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .tp-stop-dot {
+            flex-shrink: 0;
+            width: 2.2rem;
+            height: 2.2rem;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #4f46e5;
+            z-index: 1;
+            box-shadow: 0 2px 6px rgba(99,102,241,0.25);
+        }
+        .tp-stop-dot.culinary { border-color: #f59e0b; color: #d97706; }
+        .tp-stop-dot.accommodation { border-color: #10b981; color: #047857; }
+
+        .tp-stop-card {
+            flex: 1;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.6rem;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .tp-stop-card:hover { box-shadow: 0 4px 12px rgba(99,102,241,0.15); }
+        .tp-stop-card-img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+        }
+        .tp-stop-card-body { padding: 0.6rem 0.75rem; }
+        .tp-stop-time {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #6366f1;
+            letter-spacing: 0.03em;
+        }
+        .tp-stop-name {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0.15rem 0;
+            line-height: 1.3;
+        }
+        .tp-stop-meta {
+            font-size: 0.72rem;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .tp-badge {
+            padding: 0.1rem 0.4rem;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+        .tp-badge-attraction { background: #e0e7ff; color: #3730a3; }
+        .tp-badge-culinary   { background: #fef3c7; color: #92400e; }
+        .tp-badge-accommodation { background: #d1fae5; color: #065f46; }
+
+        @media (max-width: 768px) {
+            #trip-planner-panel { width: 100%; right: -100%; }
+            #trip-planner-toggle { bottom: 1rem; right: 1rem; padding: 0.7rem 1rem; font-size: 0.8rem; }
+        }
     </style>
 </head>
 <body class="h-full">
@@ -284,6 +627,82 @@
 
 <div id="map"></div>
 
+{{-- CSRF token for AJAX requests --}}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+{{-- ── TRIP PLANNER TOGGLE BUTTON ── --}}
+<button id="trip-planner-toggle" onclick="openTripPlanner()" aria-label="Open Trip Planner">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M9 21V12h6v9"/></svg>
+    Plan My Trip
+</button>
+
+{{-- ── BACKDROP ── --}}
+<div id="trip-panel-backdrop" onclick="closeTripPlanner()"></div>
+
+{{-- ── TRIP PLANNER SLIDE PANEL ── --}}
+<div id="trip-planner-panel" role="dialog" aria-label="Trip Planner">
+
+    {{-- Header --}}
+    <div class="tp-header">
+        <div>
+            <h2>🗺️ Trip Planner</h2>
+            <p>Build your Batam itinerary in seconds</p>
+        </div>
+        <button id="tp-close-btn" onclick="closeTripPlanner()" aria-label="Close">&times;</button>
+    </div>
+
+    {{-- Form --}}
+    <div class="tp-form">
+
+        <div class="tp-field">
+            <label for="tp-categories">Interests</label>
+            <div class="tp-checkbox-group" id="tp-category-checkboxes">
+                <label class="tp-checkbox-label">
+                    <input type="checkbox" name="tp_category" value="Attraction" checked id="cb-attraction"> Attraction
+                </label>
+                <label class="tp-checkbox-label">
+                    <input type="checkbox" name="tp_category" value="Food & Beverages" id="cb-culinary"> Food &amp; Beverages
+                </label>
+                <label class="tp-checkbox-label">
+                    <input type="checkbox" name="tp_category" value="Accommodation" id="cb-accommodation"> Accommodation
+                </label>
+            </div>
+        </div>
+
+        <div class="tp-field">
+            <label for="tp-duration">Trip Duration</label>
+            <select id="tp-duration">
+                <option value="3">Half Day (~3 hours)</option>
+                <option value="5" selected>Standard Day (~5 hours)</option>
+                <option value="8">Full Day (~8 hours)</option>
+                <option value="10">Extended Day (~10 hours)</option>
+            </select>
+        </div>
+
+        <div class="tp-field">
+            <label>Starting Point</label>
+            <div class="tp-checkbox-group">
+                <label class="tp-checkbox-label">
+                    <input type="radio" name="tp_start" value="default" checked id="rb-default"> Default location (Batam Centre)
+                </label>
+                <label class="tp-checkbox-label">
+                    <input type="radio" name="tp_start" value="gps" id="rb-gps"> Use my GPS location
+                </label>
+            </div>
+        </div>
+
+        <button id="tp-generate-btn" onclick="generateTrip()">
+            <span id="tp-btn-text">✨ Generate Itinerary</span>
+            <div class="tp-spinner" id="tp-spinner"></div>
+        </button>
+    </div>
+
+    {{-- Results --}}
+    <div id="tp-results">
+        <p class="tp-message info">Select your preferences above and tap <strong>Generate Itinerary</strong> to build your Batam trip plan.</p>
+    </div>
+</div>
+
 <footer><p class="text-sm">&copy; <span id="year"></span> <span class="font-semibold">Tourism Map Batam</span>. All rights reserved.</p></footer>
 
 <script>
@@ -325,7 +744,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let routeRequestID = 0; 
     // ▲▲▲ BATAS TAMBAHAN ▲▲▲
     
-    const MIN_ZOOM_FOR_MARKERS = 13;
+    const MIN_ZOOM_FOR_MARKERS = 10;
+
     
     document.getElementById("year").innerText = new Date().getFullYear();
 
@@ -342,13 +762,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const poiLayerGroup = L.layerGroup().addTo(map);
 
     const groupedPlaces = placesData.reduce((acc, place) => {
-        const category = place.category.trim();
-        const subcategory = place.subcategory.trim();
+        const category = place.category ? place.category.trim() : 'Uncategorized';
+        const subcategory = place.subcategory ? place.subcategory.trim() : 'General';
         if (!acc[category]) acc[category] = {};
         if (!acc[category][subcategory]) acc[category][subcategory] = [];
         acc[category][subcategory].push(place);
         return acc;
     }, {});
+
+    console.log("[DEBUG] Total placesData fetched:", placesData.length);
+    console.log("[DEBUG] Total smallDestinationsData fetched:", smallDestinationsData.length);
+    console.log("[DEBUG] Grouped Categories:", Object.keys(groupedPlaces));
 
     // =======================================================
     // FUNGSI-FUNGSI UTAMA PETA
@@ -359,8 +783,8 @@ document.addEventListener('DOMContentLoaded', function() {
         removeRoute(); 
         clearDeskripsi(); 
         
-        let placesToShow = category ? placesData.filter(p => p.category.trim() === category.trim()) : placesData;
-        if (subcategory) placesToShow = placesToShow.filter(p => p.subcategory.trim() === subcategory.trim());
+        let placesToShow = category ? placesData.filter(p => p.category && p.category.trim() === category.trim()) : placesData;
+        if (subcategory) placesToShow = placesToShow.filter(p => p.subcategory && p.subcategory.trim() === subcategory.trim());
         
         placesToShow.forEach(p => {
             if (p.latitude && p.longitude) {
@@ -370,18 +794,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 markerGroup.addLayer(marker); 
             }
         });
+        console.log(`[DEBUG] showMarkers called (Cat: ${category}, Sub: ${subcategory}). Rendered ${placesToShow.length} markers.`);
         updateMarkersVisibility(); 
     }
     
     function updateMarkersVisibility() {
-        if (map.getZoom() >= MIN_ZOOM_FOR_MARKERS) {
-            if (!map.hasLayer(markerGroup)) {
-                map.addLayer(markerGroup); 
-            }
-        } else {
-            if (map.hasLayer(markerGroup)) {
-                map.removeLayer(markerGroup); 
-            }
+        // PERBAIKAN: Selalu pastikan markerGroup ditambahkan agar marker tidak hilang
+        // ketika Trip Planner melakukan zoom in/out (fitSelectedRoutes)
+        if (!map.hasLayer(markerGroup)) {
+            map.addLayer(markerGroup); 
         }
     }
 
@@ -588,8 +1009,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (isClose) {
-                // PERBAIKAN PATH GAMBAR: Tambahkan /images/
-                const cardHtml = `<div class="poi-card"><img src="${escapeHtml(poi.image ? 'storage' + poi.image : 'https://via.placeholder.com/120x60.png?text=IMG')}" class="poi-card-image" alt="${escapeHtml(poi.name)}"><div class="poi-card-name">${escapeHtml(poi.name)}</div></div>`;
+                // PERBAIKAN PATH GAMBAR: Konsisten dengan renderDeskripsi
+                const imageUrl = poi.image ? escapeHtml(poi.image) : 'https://via.placeholder.com/120x60.png?text=IMG';
+                const cardHtml = `<div class="poi-card"><img src="${imageUrl}" class="poi-card-image" alt="${escapeHtml(poi.name)}"><div class="poi-card-name">${escapeHtml(poi.name)}</div></div>`;
                 const poiIcon = L.divIcon({
                     html: cardHtml, className: 'poi-card-wrapper',
                     iconSize: [120, 90], iconAnchor: [60, 45]
@@ -702,6 +1124,290 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     // "Ekspos" fungsi ini ke global agar onclick HTML bisa melihatnya
     window.calculateRoute = calculateRoute;
+
+    // =======================================================
+    // TRIP PLANNER — STATE & HELPERS
+    // =======================================================
+
+    let tripItinerary = [];       // current generated itinerary
+    let tripRoutingControl = null; // separate routing control for trip route
+
+    // Open / close panel
+    function openTripPlanner() {
+        document.getElementById('trip-planner-panel').classList.add('open');
+        document.getElementById('trip-panel-backdrop').classList.add('open');
+    }
+    function closeTripPlanner() {
+        document.getElementById('trip-planner-panel').classList.remove('open');
+        document.getElementById('trip-panel-backdrop').classList.remove('open');
+    }
+    window.openTripPlanner  = openTripPlanner;
+    window.closeTripPlanner = closeTripPlanner;
+
+    // =======================================================
+    // TRIP PLANNER — GENERATE ITINERARY
+    // =======================================================
+
+    function generateTrip() {
+        // 1. Collect selected categories
+        const categoryChecks = document.querySelectorAll('input[name="tp_category"]:checked');
+        const categories = Array.from(categoryChecks).map(cb => cb.value);
+        if (categories.length === 0) {
+            setTripResults('<p class="tp-message">Please select at least one interest category.</p>');
+            return;
+        }
+
+        // 2. Duration
+        const duration = parseInt(document.getElementById('tp-duration').value, 10);
+
+        // 3. Start point
+        const useGps = document.getElementById('rb-gps').checked;
+
+        const doFetch = (startLat, startLng) => {
+            setLoadingState(true);
+            
+            // Simpan start location yang digunakan untuk route rendering
+            window._usedStartLat = startLat;
+            window._usedStartLng = startLng;
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch('/generate-trip', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    categories:    categories,
+                    trip_duration: duration,
+                    start_lat:     startLat,
+                    start_lng:     startLng,
+                }),
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Server error: ' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                setLoadingState(false);
+                if (!data.success || !data.itinerary || data.itinerary.length === 0) {
+                    setTripResults(`<p class="tp-message">${escapeHtml(data.message || 'No itinerary could be generated. Try different options.')}</p>`);
+                    console.warn('[DEBUG] Itinerary generation failed:', data.message);
+                    return;
+                }
+                console.log(`[DEBUG] Itinerary generated successfully with ${data.itinerary.length} stops.`);
+                tripItinerary = data.itinerary;
+                renderItinerary(data);
+                showTripRoute(); // Render automatically as requested
+            })
+            .catch(err => {
+                setLoadingState(false);
+                setTripResults(`<p class="tp-message">Connection error. Please check your connection and try again.<br><small>${escapeHtml(err.message)}</small></p>`);
+                console.error('Trip Planner error:', err);
+            });
+        };
+
+        if (useGps && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    doFetch(pos.coords.latitude, pos.coords.longitude);
+                },
+                ()  => {
+                    // GPS denied — fall back to default
+                    doFetch(userLat, userLng);
+                },
+                { timeout: 6000 }
+            );
+        } else {
+            doFetch(userLat, userLng);
+        }
+    }
+    window.generateTrip = generateTrip;
+
+    // =======================================================
+    // TRIP PLANNER — RENDER ITINERARY TIMELINE
+    // =======================================================
+
+    function renderItinerary(data) {
+        const { itinerary, total_stops, trip_duration } = data;
+
+        // Summary bar
+        const endStop   = itinerary[itinerary.length - 1];
+        const startTime = itinerary[0].start_time;
+        const endTime   = endStop.end_time;
+
+        let summaryHtml = `
+            <div class="tp-summary">
+                <div class="tp-summary-stat">
+                    <div class="stat-val">${total_stops}</div>
+                    <div class="stat-lbl">Stops</div>
+                </div>
+                <div class="tp-summary-stat">
+                    <div class="stat-val">${trip_duration}h</div>
+                    <div class="stat-lbl">Duration</div>
+                </div>
+                <div class="tp-summary-stat">
+                    <div class="stat-val">${startTime}</div>
+                    <div class="stat-lbl">Start</div>
+                </div>
+                <div class="tp-summary-stat">
+                    <div class="stat-val">${endTime}</div>
+                    <div class="stat-lbl">End</div>
+                </div>
+            </div>
+        `;
+
+        // "Show on Map" button
+        let showRouteBtn = `
+            <button id="tp-show-route-btn" onclick="showTripRoute()">
+                🗺️ Show Route on Map
+            </button>
+        `;
+
+        // Timeline
+        let timelineHtml = '<div class="tp-timeline">';
+        itinerary.forEach((stop, idx) => {
+            const dotClass  = stop.category === 'Food & Beverages' ? 'culinary'
+                            : stop.category === 'Accommodation' ? 'accommodation'
+                            : '';
+            const badgeClass = stop.category === 'Food & Beverages' ? 'tp-badge-culinary'
+                             : stop.category === 'Accommodation' ? 'tp-badge-accommodation'
+                             : 'tp-badge-attraction';
+
+            const imgHtml = stop.image
+                ? `<img src="${escapeHtml(stop.image)}" class="tp-stop-card-img" alt="${escapeHtml(stop.name)}" onerror="this.style.display='none'">`
+                : '';
+
+            const clusterLabel = stop.cluster
+                ? stop.cluster.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                : '';
+
+            timelineHtml += `
+                <div class="tp-stop" data-stop-idx="${idx}">
+                    <div class="tp-stop-dot ${dotClass}">${idx + 1}</div>
+                    <div class="tp-stop-card" onclick="flyToStop(${stop.latitude}, ${stop.longitude}, ${JSON.stringify(stop).replace(/</g,'\\u003c')})">
+                        ${imgHtml}
+                        <div class="tp-stop-card-body">
+                            <div class="tp-stop-time">⏰ ${stop.start_time} – ${stop.end_time}</div>
+                            <div class="tp-stop-name">${escapeHtml(stop.name)}</div>
+                            <div class="tp-stop-meta">
+                                <span class="tp-badge ${badgeClass}">${escapeHtml(stop.category)}</span>
+                                ${clusterLabel ? `<span>📍 ${escapeHtml(clusterLabel)}</span>` : ''}
+                                <span>🕐 ${stop.visit_duration} min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        timelineHtml += '</div>';
+
+        setTripResults(summaryHtml + showRouteBtn + timelineHtml);
+    }
+
+    // =======================================================
+    // TRIP PLANNER — CLICK A STOP → FLY TO IT ON MAP
+    // =======================================================
+
+    function flyToStop(lat, lng, stopData) {
+        map.flyTo([lat, lng], 16, { duration: 1.2 });
+        // Also open the existing description sidebar for this place
+        if (stopData && stopData.place_id) {
+            const place = placesData.find(p => p.id === stopData.place_id);
+            if (place) renderDeskripsi(place);
+        }
+    }
+    window.flyToStop = flyToStop;
+
+    // =======================================================
+    // TRIP PLANNER — SHOW MULTI-STOP ROUTE ON MAP
+    // =======================================================
+
+    function showTripRoute() {
+        if (!tripItinerary || tripItinerary.length === 0) return;
+
+        // Remove previous trip route
+        if (tripRoutingControl) {
+            map.removeControl(tripRoutingControl);
+            tripRoutingControl = null;
+        }
+        // Also remove single-place route
+        removeRoute();
+
+        // Build waypoints: user start + all stops
+        const startPoint = L.latLng(window._usedStartLat || userLat, window._usedStartLng || userLng);
+
+        const waypoints = [startPoint];
+        tripItinerary.forEach(stop => {
+            if (stop.latitude && stop.longitude) {
+                waypoints.push(L.latLng(stop.latitude, stop.longitude));
+            }
+        });
+
+        if (waypoints.length < 2) {
+            alert('Not enough valid coordinates to draw a route.');
+            return;
+        }
+
+        tripRoutingControl = L.Routing.control({
+            waypoints: waypoints,
+            router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                profile: 'driving',
+            }),
+            show: false,
+            createMarker: (i, wp) => {
+                // Custom numbered markers for each stop
+                const stop   = tripItinerary[i - 1]; // i=0 is start point
+                const label  = i === 0 ? '🚩' : String(i);
+                const color  = i === 0 ? '#6b7280'
+                             : (stop && stop.category === 'Food & Beverages') ? '#f59e0b'
+                             : '#6366f1';
+                const icon = L.divIcon({
+                    html: `<div style="background:${color};color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid white;">${label}</div>`,
+                    className: '',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14],
+                });
+                return L.marker(wp.latLng, { icon });
+            },
+            routeWhileDragging: false,
+            lineOptions: {
+                styles: [{ color: '#6366f1', opacity: 0.9, weight: 5, dashArray: '8,4' }],
+            },
+            fitSelectedRoutes: true,
+        }).addTo(map);
+
+        // We don't close the panel automatically anymore because the user might want to read the itinerary timeline first.
+        // Brief feedback in the toggle button
+        const toggleBtn = document.getElementById('trip-planner-toggle');
+        const orig = toggleBtn.innerHTML;
+        toggleBtn.innerHTML = '✅ Route on Map';
+        setTimeout(() => { toggleBtn.innerHTML = orig; }, 3000);
+    }
+    window.showTripRoute = showTripRoute;
+
+    // =======================================================
+    // TRIP PLANNER — UI HELPERS
+    // =======================================================
+
+    function setLoadingState(isLoading) {
+        const btn     = document.getElementById('tp-generate-btn');
+        const spinner = document.getElementById('tp-spinner');
+        const btnText = document.getElementById('tp-btn-text');
+        btn.disabled  = isLoading;
+        spinner.style.display = isLoading ? 'block' : 'none';
+        btnText.textContent   = isLoading ? 'Generating...' : '✨ Generate Itinerary';
+        if (isLoading) {
+            setTripResults('<p class="tp-message info">⏳ Building your personalised itinerary...</p>');
+        }
+    }
+
+    function setTripResults(html) {
+        document.getElementById('tp-results').innerHTML = html;
+    }
 
 }); // <-- Akhir dari document.addEventListener
 </script>

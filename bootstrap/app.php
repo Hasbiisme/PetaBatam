@@ -11,7 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Public AJAX endpoint for Trip Planner.
+        // Excluded from CSRF validation so the public demo via ngrok/Google Form
+        // does not fail with HTTP 419 when the session cookie/token is not preserved.
+        $middleware->validateCsrfTokens(except: [
+            'generate-trip',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -26,7 +26,7 @@ Route::get('/trip/categories', [TripController::class, 'getCategories']);
 // 2. Dashboard (Login Required)
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
-// 3. Rute Profile (YANG HILANG TADI)
+// 3. Rute Profile
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -48,14 +48,13 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Itinerary Preview
     Route::get('/itinerary-preview', [ItineraryPreviewController::class, 'index'])->name('admin.itinerary-preview.index');
 
-    // ▼▼▼ TAMBAHKAN BLOK INI UNTUK SMALL DESTINATIONS ▼▼▼
+    // Small Destinations
     Route::get('/small-destinations', [SmallDestinationController::class, 'index'])->name('admin.small-destinations.index');
     Route::get('/small-destinations/create', [SmallDestinationController::class, 'create'])->name('admin.small-destinations.create');
     Route::post('/small-destinations', [SmallDestinationController::class, 'store'])->name('admin.small-destinations.store');
     Route::get('/small-destinations/{id}/edit', [SmallDestinationController::class, 'edit'])->name('admin.small-destinations.edit');
     Route::put('/small-destinations/{id}', [SmallDestinationController::class, 'update'])->name('admin.small-destinations.update');
     Route::delete('/small-destinations/{id}', [SmallDestinationController::class, 'destroy'])->name('admin.small-destinations.destroy');
-    // ▲▲▲ BATAS AKHIR ▲▲▲
 });
 
 require __DIR__.'/auth.php';

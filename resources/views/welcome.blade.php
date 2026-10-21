@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Tourism Map Batam</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -580,6 +581,113 @@
             #trip-planner-panel { width: 100%; right: -100%; }
             #trip-planner-toggle { bottom: 1rem; right: 1rem; padding: 0.7rem 1rem; font-size: 0.8rem; }
         }
+
+
+        /* =========================================================
+           MOBILE FIX: category/subcategory tidak lagi perlu scroll kanan
+           ========================================================= */
+        @media (max-width: 768px) {
+            .category-container {
+                top: 3.5rem;
+                left: 0;
+                right: 0;
+                width: 100%;
+                border-radius: 0 0 1rem 1rem;
+                padding: 0.45rem 0.55rem;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: center;
+                gap: 0.35rem;
+                overflow: visible;
+                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+            }
+
+            .category-btn-wrapper {
+                position: static;
+                flex: 0 0 auto;
+            }
+
+            .category-btn {
+                padding: 0.42rem 0.72rem;
+                font-size: 0.75rem;
+                line-height: 1;
+                white-space: nowrap;
+            }
+
+            .subcategory-dropdown {
+                position: fixed;
+                top: 7.35rem;
+                left: 0.75rem;
+                right: 0.75rem;
+                width: auto;
+                min-width: 0;
+                max-height: 42vh;
+                overflow-y: auto;
+                transform: none;
+                margin-top: 0;
+                padding: 0.45rem;
+                border-radius: 1rem;
+                box-shadow: 0 14px 35px rgba(15, 23, 42, 0.24);
+                z-index: 3600;
+            }
+
+            .subcategory-item {
+                border-radius: 0.75rem;
+                padding: 0.75rem 0.85rem;
+                font-weight: 700;
+                color: #374151;
+                border-bottom: 1px solid #eef2ff;
+            }
+
+            .subcategory-item::after {
+                content: 'Lihat tempat';
+                float: right;
+                font-size: 0.68rem;
+                font-weight: 700;
+                color: #6366f1;
+                background: #eef2ff;
+                border-radius: 9999px;
+                padding: 0.18rem 0.45rem;
+            }
+
+            .subcategory-item.mobile-open,
+            .subcategory-item:hover {
+                background: #f8faff;
+            }
+
+            .subcategory-item.open-left > .place-dropdown,
+            .place-dropdown {
+                position: static;
+                left: auto;
+                right: auto;
+                top: auto;
+                width: 100%;
+                max-height: 13.5rem;
+                overflow-y: auto;
+                margin-top: 0.65rem;
+                border: 1px solid #e0e7ff;
+                border-radius: 0.85rem;
+                box-shadow: none;
+                background: #ffffff;
+                display: none;
+            }
+
+            .subcategory-item:hover > .place-dropdown,
+            .subcategory-item.mobile-open > .place-dropdown {
+                display: block;
+            }
+
+            .place-item {
+                padding: 0.6rem;
+            }
+
+            .place-item img {
+                width: 54px;
+                height: 38px;
+            }
+        }
+
     </style>
 </head>
 <body class="h-full">
@@ -627,8 +735,6 @@
 
 <div id="map"></div>
 
-{{-- CSRF token for AJAX requests --}}
-<meta name="csrf-token" content="{{ csrf_token() }}">
 
 {{-- ── TRIP PLANNER TOGGLE BUTTON ── --}}
 <button id="trip-planner-toggle" onclick="openTripPlanner()" aria-label="Open Trip Planner">
@@ -759,6 +865,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const markerGroup = L.layerGroup(); 
     const markerRefs = {};
+    // Saat Trip Planner berhasil menampilkan itinerary, marker destinasi umum disembunyikan
+    // agar peta fokus pada rute perjalanan. Marker akan muncul lagi saat user memilih kategori.
+    let destinationMarkersHiddenForTrip = false;
+
+    let tripItinerary = [];       // current generated itinerary
+    let tripRoutingControl = null; // separate routing control for trip route
+
+    function clearTripRoute() {
+        if (tripRoutingControl) {
+            map.removeControl(tripRoutingControl);
+            tripRoutingControl = null;
+        }
+    }
+
     const poiLayerGroup = L.layerGroup().addTo(map);
 
     const groupedPlaces = placesData.reduce((acc, place) => {
@@ -779,8 +899,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // =======================================================
 
     function showMarkers(category = null, subcategory = null) {
+        // User kembali memilih kategori/subkategori, jadi tampilkan lagi marker destinasi umum
+        // dan bersihkan rute Trip Planner agar mode browsing peta kembali normal.
+        destinationMarkersHiddenForTrip = false;
         markerGroup.clearLayers(); 
-        removeRoute(); 
+        removeRoute();
+        clearTripRoute(); 
         clearDeskripsi(); 
         
         let placesToShow = category ? placesData.filter(p => p.category && p.category.trim() === category.trim()) : placesData;
@@ -799,8 +923,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateMarkersVisibility() {
-        // PERBAIKAN: Selalu pastikan markerGroup ditambahkan agar marker tidak hilang
-        // ketika Trip Planner melakukan zoom in/out (fitSelectedRoutes)
+        // Jika itinerary Trip Planner sedang aktif, marker destinasi umum sengaja disembunyikan
+        // supaya peta tidak terlalu ramai. Marker akan muncul lagi melalui showMarkers().
+        if (destinationMarkersHiddenForTrip) {
+            if (map.hasLayer(markerGroup)) {
+                map.removeLayer(markerGroup);
+            }
+            return;
+        }
+
         if (!map.hasLayer(markerGroup)) {
             map.addLayer(markerGroup); 
         }
@@ -1083,6 +1214,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         placesDropdown.appendChild(placeItem);
                     });
                     subcategoryItem.appendChild(placesDropdown);
+
+                    // Mobile UX: klik subcategory untuk membuka daftar tempat di bawahnya,
+                    // bukan dropdown ke samping. Sekaligus filter marker sesuai subcategory.
+                    subcategoryItem.addEventListener('click', (e) => {
+                        if (window.innerWidth <= 768) {
+                            e.stopPropagation();
+                            const wasOpen = subcategoryItem.classList.contains('mobile-open');
+                            dropdownContainer.querySelectorAll('.subcategory-item').forEach(item => item.classList.remove('mobile-open'));
+                            if (!wasOpen) subcategoryItem.classList.add('mobile-open');
+                        }
+                        showMarkers(category, subcategory);
+                    });
+
                     dropdownContainer.appendChild(subcategoryItem);
                 });
             }
@@ -1091,6 +1235,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.stopPropagation();
                 const isCurrentlyShown = dropdownContainer.classList.contains('show');
                 document.querySelectorAll('.subcategory-dropdown').forEach(d => d.classList.remove('show'));
+                document.querySelectorAll('.subcategory-item.mobile-open').forEach(item => item.classList.remove('mobile-open'));
                 if (!isCurrentlyShown) dropdownContainer.classList.add('show');
                 setActiveButton(button);
                 showMarkers(category);
@@ -1105,6 +1250,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('click', (event) => {
             if (!event.target.closest('.category-btn-wrapper')) {
                 document.querySelectorAll('.subcategory-dropdown').forEach(dropdown => dropdown.classList.remove('show'));
+                document.querySelectorAll('.subcategory-item.mobile-open').forEach(item => item.classList.remove('mobile-open'));
             }
         });
     }
@@ -1128,9 +1274,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // =======================================================
     // TRIP PLANNER — STATE & HELPERS
     // =======================================================
-
-    let tripItinerary = [];       // current generated itinerary
-    let tripRoutingControl = null; // separate routing control for trip route
 
     // Open / close panel
     function openTripPlanner() {
@@ -1170,13 +1313,16 @@ document.addEventListener('DOMContentLoaded', function() {
             window._usedStartLat = startLat;
             window._usedStartLng = startLng;
 
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
             fetch('/generate-trip', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({
@@ -1233,11 +1379,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderItinerary(data) {
         const { itinerary, total_stops, trip_duration } = data;
 
-        // Summary bar
-        const endStop   = itinerary[itinerary.length - 1];
-        const startTime = itinerary[0].start_time;
-        const endTime   = endStop.end_time;
-
+        // Summary bar dibuat lebih ringkas: keterangan Start dan End dihilangkan
+        // agar tampilan Plan My Trip tidak terlalu penuh di layar mobile.
         let summaryHtml = `
             <div class="tp-summary">
                 <div class="tp-summary-stat">
@@ -1247,14 +1390,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="tp-summary-stat">
                     <div class="stat-val">${trip_duration}h</div>
                     <div class="stat-lbl">Duration</div>
-                </div>
-                <div class="tp-summary-stat">
-                    <div class="stat-val">${startTime}</div>
-                    <div class="stat-lbl">Start</div>
-                </div>
-                <div class="tp-summary-stat">
-                    <div class="stat-val">${endTime}</div>
-                    <div class="stat-lbl">End</div>
                 </div>
             </div>
         `;
@@ -1328,13 +1463,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function showTripRoute() {
         if (!tripItinerary || tripItinerary.length === 0) return;
 
-        // Remove previous trip route
-        if (tripRoutingControl) {
-            map.removeControl(tripRoutingControl);
-            tripRoutingControl = null;
-        }
-        // Also remove single-place route
+        // Remove previous trip route and single-place route
+        clearTripRoute();
         removeRoute();
+
+        // Sembunyikan marker destinasi umum saat itinerary/rute ditampilkan
+        // agar yang terlihat hanya rute dan marker urutan perjalanan.
+        destinationMarkersHiddenForTrip = true;
+        if (map.hasLayer(markerGroup)) {
+            map.removeLayer(markerGroup);
+        }
 
         // Build waypoints: user start + all stops
         const startPoint = L.latLng(window._usedStartLat || userLat, window._usedStartLng || userLng);

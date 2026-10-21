@@ -1,0 +1,9 @@
+# Nixpacks configuration for Railway
+[phases.build]
+cmds = [
+    'npm ci || npm install',
+    'npm run build'
+]
+
+[start]
+cmd = 'php artisan migrate --force && php artisan storage:link && php artisan serve --host=0.0.0.0 --port=$PORT'
